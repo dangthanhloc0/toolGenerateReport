@@ -1,7 +1,6 @@
 node_modules/
 *.log
 .env
-template/
-*.xlsx
-*.docx
-*.zip
+# Keep template files
+!template/*.xlsx
+!template/*.docx

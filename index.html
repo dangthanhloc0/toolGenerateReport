@@ -57,7 +57,7 @@
       msg.innerText = "Đang crawl... (có thể vài giây)";
 
       try {
-        const res = await fetch("/crawl", {
+        const res = await fetch("http://localhost:3001/crawl", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url,urlChangeLog })
