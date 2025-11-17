@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Simple Crawl Tool</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+  <h2>Simple Crawl Tool</h2>
+
+  <input id="url" type="text" placeholder="Nhập URL..." style="width:380px; padding:8px;">
+  
+  <div id="urlChangeLogContainer">
+    <div style="margin-bottom: 10px;">
+      <input class="urlChangeLog" type="text" placeholder="Nhập Change Log URL..." style="width:380px; padding:8px;">
+    </div>
+  </div>
+  <button id="addUrlBtn" style="padding:8px 12px; margin-bottom: 10px;">+ Thêm URL</button>
+  
+  <br>
+  <button id="btn" style="padding:8px 12px;">Crawl & Download Excel</button>
+
+  <p id="msg"></p>
+
+  <script>
+    // Add URL button handler
+    document.getElementById("addUrlBtn").addEventListener("click", () => {
+      const container = document.getElementById("urlChangeLogContainer");
+      const newInput = document.createElement("div");
+      newInput.style.marginBottom = "10px";
+      newInput.innerHTML = `
+        <input class="urlChangeLog" type="text" placeholder="Nhập Change Log URL..." style="width:380px; padding:8px;">
+        <button class="removeUrlBtn" style="padding:8px; margin-left:5px;">Xóa</button>
+      `;
+      container.appendChild(newInput);
+      
+      // Add remove button handler
+      newInput.querySelector(".removeUrlBtn").addEventListener("click", function() {
+        container.removeChild(newInput);
+      });
+    });
+
+    document.getElementById("btn").addEventListener("click", async () => {
+      const url = document.getElementById("url").value.trim();
+      
+      // Collect all urlChangeLog values
+      const urlChangeLogInputs = document.querySelectorAll(".urlChangeLog");
+      const urlChangeLogList = Array.from(urlChangeLogInputs)
+        .map(input => input.value.trim())
+        .filter(val => val !== ""); // Remove empty values
+      
+      const urlChangeLog = urlChangeLogList.join(",");
+      
+      console.log("Frontend - url:", url);
+      console.log("Frontend - urlChangeLog:", urlChangeLog);
+      const msg = document.getElementById("msg");
+      if (!url) { msg.innerText = "Nhập URL trước đã."; return; }
+      msg.innerText = "Đang crawl... (có thể vài giây)";
+
+      try {
+        const res = await fetch("/crawl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url,urlChangeLog })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          msg.innerText = "Lỗi: " + text;
+          return;
+        }
+
+        const blob = await res.blob();
+        
+        // Lấy tên file từ Content-Disposition header
+        const contentDisposition = res.headers.get('Content-Disposition');
+        console.log("Content-Disposition:", contentDisposition);
+        let filename = "data.zip"; // Default to ZIP
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+          console.log("Filename match:", filenameMatch);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = decodeURIComponent(filenameMatch[1]);
+          }
+        }
+        console.log("Final filename:", filename);
+        
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        msg.innerText = `Hoàn tất! File ${filename} đã được tải.`;
+      } catch (err) {
+        console.error(err);
+        msg.innerText = "Lỗi khi gọi backend: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
