@@ -1,9 +1,9 @@
 services:
   - type: web
     name: generate-report
-    env: node
-    buildCommand: npm install && npx playwright install chromium
+    runtime: node
+    buildCommand: npm install && npx playwright install chromium --with-deps
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
-        value: 18
+        value: 20
